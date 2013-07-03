@@ -1,29 +1,34 @@
 #!/usr/bin/python
 import sys, time
 import thread
+from random import randrange
 
 from PyQt4 import QtGui, QtCore
 
-class Example(QtGui.QWidget):
+class Snake(QtGui.QWidget):
 	def __init__(self):
-		super(Example, self).__init__()
+		super(Snake, self).__init__()
 		self.initUI()
 
 	def initUI(self):
 		self.text = "snake time!"
 
-		self.snakeLength = 2
-		self.x = 0;
-		self.y = 0;
+		self.score = 0
+		self.x = 12;
+		self.y = 36;
 		self.lastKeyPress = 'RIGHT'
 		self.timer = QtCore.QBasicTimer()
 		self.inflection_point = (0,0)
 
+		self.foodx = 0
+		self.foody = 0
+
 		self.isPaused = False
 		self.isOver = False
-		self.timer.start(100, self)
+		self.FoodPlaced = False
+		self.start()
 		self.setStyleSheet("QWidget { background: #A9F5D0 }") 
-		self.setFixedSize(300, 300) 
+		self.setFixedSize(300, 300)
 		self.setWindowTitle('Snake')
 		self.show()
 
@@ -32,7 +37,10 @@ class Example(QtGui.QWidget):
 		qp.begin(self)
 		if self.isOver:
 			self.gameOver(event, qp)
+		self.scoreBoard(qp)
+		self.placeFood(qp)
 		self.drawSnake(qp)
+		self.scoreText(event, qp)
 		qp.end()
 
 	def keyPressEvent(self, e):
@@ -87,26 +95,50 @@ class Example(QtGui.QWidget):
 				self.x -= 1
 				self.repaint()
 
+	def scoreBoard(self, qp):
+		qp.setPen(QtCore.Qt.NoPen)
+		qp.setBrush(QtGui.QColor(25, 80, 0, 160))
+		qp.drawRect(0, 0, 300, 24)
+
+	def scoreText(self, event, qp):
+		qp.setPen(QtGui.QColor(255, 255, 255))
+		qp.setFont(QtGui.QFont('Decorative', 10))
+		
+		qp.drawText(10, 17, "SCORE: " + str(self.score))   
+
 	def gameOver(self, event, qp):
 		qp.setPen(QtGui.QColor(168, 34, 3))
 		qp.setFont(QtGui.QFont('Decorative', 10))
 		qp.drawText(event.rect(), QtCore.Qt.AlignCenter, "GAME OVER")   
 
 	def checkStatus(self, x, y):
-		if y > 288 or x > 288 or x < 0 or y < 0:
+		if y > 288 or x > 288 or x < 0 or y < 24:
 			self.pause()
 			self.isPaused = True
 			self.isOver = True
 			return False
+		elif self.y == self.foody and self.x == self.foodx:
+			self.FoodPlaced = False
+			self.score += 1
+			
+			return True
+
 		return True
 
+	def placeFood(self, qp):
+		if self.FoodPlaced == False:
+			self.foodx = randrange(24)*12
+			self.foody = randrange(2, 24)*12
+			print "food placed at: ", self.foodx, self.foody
+			self.FoodPlaced = True;
+
+		qp.setBrush(QtGui.QColor(80, 180, 0, 160))
+		qp.drawRect(self.foodx, self.foody, 12, 12)
+
 	def drawSnake(self, qp):
-		color = QtGui.QColor(0,0,0)
-		color.setNamedColor('#ffffff')
-		qp.setPen(color)
-		qp.setBrush(QtGui.QColor(255, 80, 0, 160))
+		qp.setPen(QtCore.Qt.NoPen)
+		qp.setBrush(QtGui.QColor(255, 80, 0, 255))
 		qp.drawRect(self.x, self.y, 12, 12)
-		
 
 	def timerEvent(self, event):
 		if event.timerId() == self.timer.timerId():
@@ -117,7 +149,7 @@ class Example(QtGui.QWidget):
 
 def main():
 	app = QtGui.QApplication(sys.argv)
-	ex = Example()
+	ex = Snake()
 	sys.exit(app.exec_())
 	
 
