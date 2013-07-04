@@ -11,14 +11,13 @@ class Snake(QtGui.QWidget):
 		self.initUI()
 
 	def initUI(self):
-		self.text = "snake time!"
-
 		self.score = 0
 		self.x = 12;
 		self.y = 36;
 		self.lastKeyPress = 'RIGHT'
 		self.timer = QtCore.QBasicTimer()
 		self.inflection_point = (0,0)
+		self.snakeArray = [[self.x, self.y], [self.x-12, self.y], [self.x-24, self.y]]
 
 		self.foodx = 0
 		self.foody = 0
@@ -45,7 +44,8 @@ class Snake(QtGui.QWidget):
 
 	def keyPressEvent(self, e):
 		if not self.isPaused:
-			print "inflection point: ", self.x, " ", self.y
+			#print "inflection point: ", self.x, " ", self.y
+			print self.snakeArray
 			if e.key() == QtCore.Qt.Key_Up and self.lastKeyPress != 'UP':
 				self.direction("UP")
 				self.lastKeyPress = 'UP'
@@ -75,26 +75,21 @@ class Snake(QtGui.QWidget):
 
 	def direction(self, dir):
 		if (dir == "DOWN" and self.checkStatus(self.x, self.y+12)):
-			for i in range(1, 13):
-				time.sleep(0.009)
-				self.y += 1
-				self.repaint()
+			self.y += 12
+			self.repaint()
+			self.snakeArray.insert(0 ,[self.x, self.y])
 		elif (dir == "UP" and self.checkStatus(self.x, self.y-12)):
-			for i in range(1, 13):
-				time.sleep(0.009)
-				self.y -= 1
-				self.repaint()
+			self.y -= 12
+			self.repaint()
+			self.snakeArray.insert(0 ,[self.x, self.y])
 		elif (dir == "RIGHT" and self.checkStatus(self.x+12, self.y)):
-			for i in range(1, 13):
-				time.sleep(0.009)
-				self.x += 1
-				self.repaint()
+			self.x += 12
+			self.repaint()
+			self.snakeArray.insert(0 ,[self.x, self.y])
 		elif (dir == "LEFT" and self.checkStatus(self.x-12, self.y)):
-			for i in range(1, 13):
-				time.sleep(0.009)
-				self.x -= 1
-				self.repaint()
-
+			self.x -= 12
+			self.repaint()
+			self.snakeArray.insert(0 ,[self.x, self.y])
 	def scoreBoard(self, qp):
 		qp.setPen(QtCore.Qt.NoPen)
 		qp.setBrush(QtGui.QColor(25, 80, 0, 160))
@@ -117,11 +112,16 @@ class Snake(QtGui.QWidget):
 			self.isPaused = True
 			self.isOver = True
 			return False
+		elif self.snakeArray[0] in self.snakeArray[1:len(self.snakeArray)]:
+			self.pause()
+			self.isPaused = True
+			self.isOver = True
+			return False
 		elif self.y == self.foody and self.x == self.foodx:
 			self.FoodPlaced = False
 			self.score += 1
-			
 			return True
+		self.snakeArray.pop()
 
 		return True
 
@@ -138,7 +138,8 @@ class Snake(QtGui.QWidget):
 	def drawSnake(self, qp):
 		qp.setPen(QtCore.Qt.NoPen)
 		qp.setBrush(QtGui.QColor(255, 80, 0, 255))
-		qp.drawRect(self.x, self.y, 12, 12)
+		for i in self.snakeArray:
+			qp.drawRect(i[0], i[1], 12, 12)
 
 	def timerEvent(self, event):
 		if event.timerId() == self.timer.timerId():
